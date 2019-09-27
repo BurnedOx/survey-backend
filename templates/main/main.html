@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Chat Room</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
+</head>
+
+<body>
+    <div>
+        <p>Average Age of population: <span id="avg-age-population"></span></p>
+        <p>Average First smoking age: <span id="avg-smoking-age"></span></p>
+        <p>Average First drinking age: <span id="avg-drinking-age"></span></p>
+    </div><br />
+
+    <canvas id="myChart" height=100></canvas><br /><br />
+
+    <label for="name-input">Name: </label>
+    <input id="name-input" type="text" size="100" required /><br />
+    <label for="age-input">Age: </label>
+    <input id="age-input" type="number" size="100" required /><br />
+    <label for="smoking-input">First smoking age: </label>
+    <input id="smoking-input" type="number" size="100" /><br />
+    <label for="drinking-input">First drinking age: </label>
+    <input id="drinking-input" type="number" size="100" /><br />
+    <input id="survey-submit" type="button" value="Send" />
+</body>
+
+<script>
+    var surveySocket = new ReconnectingWebSocket(
+        'ws://' + window.location.host + '/ws/survey/');
+
+    surveySocket.onmessage = function (e) {
+        let data = JSON.parse(e.data);
+        let totalSurvey = data['totalSurvey']
+        let population = data['population'];
+        let smoking = data['smoking'];
+        let drinking = data['drinking'];
+        document.getElementById('avg-age-population').innerHTML = population;
+        document.getElementById('avg-smoking-age').innerHTML = smoking;
+        document.getElementById('avg-drinking-age').innerHTML = drinking;
+
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'bar',
+
+            data: {
+                labels: ['Avg. age of population', 'Avg. 1st smpoking age', 'Avg. 1st drinking age'],
+                datasets: [{
+                    label: `${totalSurvey} surveys`,
+                    data: [population, smoking, drinking],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    };
+
+    surveySocket.onclose = function (e) {
+        console.error('socket closed unexpectedly');
+    };
+
+    document.querySelector('#survey-submit').onclick = function (e) {
+        let name = document.querySelector('#name-input').value;
+        let age = document.querySelector('#age-input').value;
+        let smoking = document.querySelector('#smoking-input').value;
+        let drinking = document.querySelector('#drinking-input').value;
+
+        surveySocket.send(JSON.stringify({
+            'name': name,
+            'age': age,
+            'smoking': smoking,
+            'drinking': drinking
+        }));
+
+        document.querySelector('#name-input').value = '';
+        document.querySelector('#age-input').value = '';
+        document.querySelector('#smoking-input').value = '';
+        document.querySelector('#drinking-input').value = '';
+    };
+</script>
+
+</html>
