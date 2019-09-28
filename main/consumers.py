@@ -35,7 +35,7 @@ class SurveyConsumer(AsyncWebsocketConsumer):
         smoking = text_data_json['smoking']
         drinking = text_data_json['drinking']
 
-        store_sarvey(name, age, smoking, drinking)
+        await store_sarvey(name, age, smoking, drinking)
         data = survey_analysis()
 
         await self.channel_layer.group_send(

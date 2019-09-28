@@ -1,7 +1,9 @@
 from .models import Survey
 from django.db.models import Avg
+from channels.db import database_sync_to_async
 
 
+@database_sync_to_async
 def store_sarvey(name, age, smoking, drinking):
     Survey.objects.get_or_create(
         name=name,
